@@ -33,3 +33,77 @@ for year in range (starting_year, current_year + 1, year_interval):
         targeted_year.append(ending_year)
 
 print(targeted_year)
+
+# Create empty list to store raw data
+data_raw = []
+
+max_retries = 2
+
+for year in targeted_year:
+    payload_month = {
+    '_csrf': csrf_token,
+    'Tradev2[typeofsearch]': 'classification',
+    'Tradev2[typedigit]': 7,
+    'Tradev2[rangecode1]': 0,
+    'Tradev2[rangecode2]': 9,
+    # 'Tradev2[code_idcode]': ,
+    # 'Tradev2[code_idcodedigit9]': ,
+    # 'Tradev2[tradeflow]': ,
+    'Tradev2[tradeflow][]': 'exports',
+    # 'Tradev2[timeframe]': ,
+    'Tradev2[timeframe]': 'month',
+    # 'Tradev2[rangeyear]': ,
+    # 'Tradev2[rangeyear2]': ,
+    # 'Tradev2[rangeyearone]': ,
+    # 'Tradev2[rangemonthone]': ,
+    'Tradev2[mothdata]': starting_year,
+    'Tradev2[mothdata2]': year,
+    # 'Tradev2[classification_serch]': ,
+    # 'Tradev2[country2]': ,
+    'Tradev2[geogroup]': 1,
+    'Tradev2[geogroup]': 29,
+    'Tradev2[codeshowby]': 'code'
+    }
+    
+    for retry in range(max_retries):
+        retry_delay = random.randint(10,15)  # seconds
+        try:
+            # Start requesting raw data from the targeted url
+            monthly_raw = requests.post(url, data=payload_month, headers=headers)
+            status = monthly_raw.status_code
+
+            # Check the status_code of the request
+            if monthly_raw.status_code == 200:
+                data_raw.append(monthly_raw)
+                print(f"Data Extraction for {starting_year}-{year} is Successful.")
+            
+            else:
+                # Retry the data extraction if status_code != 200
+                while status != 200:
+                    print(f"Error: Response [{status}]. Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    monthly_raw = requests.post(url, data=payload_month, headers=headers)
+                    i = 0
+                    i += 1
+                    if i > max_retries: # Break the loop if maximum retries have reached
+                        print(f"Fail to Retreive Data for {starting_year}-{year}.")
+                        break
+                    status = monthly_raw.status_code
+                    
+                data_raw.append(monthly_raw)
+                print(f"Data Extraction for {starting_year}-{year} is Successful.")
+                time.sleep(5)
+                
+            break # Break if successful
+        
+        except (requests.ConnectionError) as e:
+            print(f"Error: {e}. Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
+            
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            break  # Stop retrying if a different error occurs
+        
+    
+    if year < current_year:
+        starting_year = year + 1
