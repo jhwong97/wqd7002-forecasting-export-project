@@ -1,3 +1,7 @@
+import pandas as pd
+import time
+from bs4 import BeautifulSoup
+
 # Create an empty list for storing the raw text from data extraction
 data_extracted = []
 
