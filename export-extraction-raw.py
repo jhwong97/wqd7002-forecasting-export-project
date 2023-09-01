@@ -3,6 +3,8 @@ import requests
 import random
 import time
 
+start_time = time.time()
+
 # URL, csrf_token, headers from targeted url
 url = "https://metsonline.dosm.gov.my/tradev2/product-coderesult"
 csrf_token = 'dG5PZ09oay0nPiIMATBTeTsZHFAgKSJdRQQVKwRYJBQADRckHStGYA=='
@@ -107,3 +109,8 @@ for year in targeted_year:
     
     if year < current_year:
         starting_year = year + 1
+
+print(data_raw)
+
+end_time = time.time()
+print(f'{end_time - start_time}')
