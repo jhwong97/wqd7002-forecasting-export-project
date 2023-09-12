@@ -1,3 +1,4 @@
+from logging_export import logger
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -57,10 +58,11 @@ def export_extract(url, start_year, end_year, max_retries):
     raw_data = session.post(url, data=payload_month, headers=headers)    
     
     if raw_data.status_code == 200:
-        print(f"SUCCESS: Data for {end_year} has been extracted")
+        logger.info(f"SUCCESS: Data for {end_year} has been extracted")
     else:
-        print(f"FAILED: Data for {end_year} not able to be extracted")
+        logger.info(f"FAILED: Data for {end_year} not able to be extracted")
     
-    return raw_data.text
+    logger.debug(f'{raw_data.status_code}')
+    return raw_data
 
-# export_extract(url, 2000, 2000,2)
+export_extract(url, 2000, 2000,2)
