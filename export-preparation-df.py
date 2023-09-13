@@ -1,42 +1,34 @@
+# import export_raw_extract
+from export_raw_extract import export_extract
+from logging_export import logger
+
 import pandas as pd
-import time
 from bs4 import BeautifulSoup
 
-# Create an empty list for storing the raw text from data extraction
-data_extracted = []
+url = "https://metsonline.dosm.gov.my/tradev2/product-coderesult"
 
-# To extract only the table value
-for raw in data_raw:
-    individual_data = []
-    result = BeautifulSoup(raw.text, 'html.parser') # Parse the HTML
+raw_data = export_extract(url,2000,2000)
+
+def export_prepare():
+    result = BeautifulSoup(raw_data.text, 'html.parser') # Parse the HTML
     table = result.find('table', class_='table-bordered') # Look up for the table
     # Extract table rows
     rows = table.find_all('tr')
+    
+    individual_data = []
     for row in rows:
         cols = row.find_all(['th', 'td'])
         cols = [col.get_text(strip=True) for col in cols]
-        if not cols:
-            next # Ignore improper row structure from adding into the list
-        else:
+        if cols:
             individual_data.append(cols)
-    data_extracted.append(individual_data)
-    
-start_time = time.time()
 
-# Select a subset of columns from the first row as column names
-raw_df = pd.DataFrame()
-
-for item in data_extracted:
-    df = pd.DataFrame(item)
+    # Select a subset of columns from the first row as column names
+    df = pd.DataFrame(individual_data)
     for index, row in df.iterrows():
         row_data = list(row)
         if "GRAND TOTAL" in row_data:
             i = index
     df.drop(df.index[i], inplace=True)
-    raw_df = pd.concat([raw_df, df], axis=1, ignore_index=True)
-    
-raw_df = raw_df.loc[:, ~raw_df.columns.duplicated()]
-display(raw_df)
+    logger.info(df)
 
-end_time = time.time()
-print(f'{end_time-start_time}')
+export_prepare()
