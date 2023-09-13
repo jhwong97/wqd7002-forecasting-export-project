@@ -16,7 +16,7 @@ headers = {
 "Cookie": cookie} 
 
 # Function to extract data
-def export_extract(url, start_year, end_year, max_retries):
+def export_extract(url, start_year, end_year):
     
     payload_month = {
     '_csrf': csrf_token,
@@ -43,9 +43,11 @@ def export_extract(url, start_year, end_year, max_retries):
     'Tradev2[codeshowby]': 'code'
     }
     
+    MAX_RETRIES = 2
+    
     # Define the retry strategy
     retry_strategy = Retry(
-        total = max_retries,
+        total = MAX_RETRIES,
         backoff_factor = 1.5,
         status_forcelist = [429, 500, 502, 503, 504]
     )
