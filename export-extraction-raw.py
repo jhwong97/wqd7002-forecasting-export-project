@@ -9,8 +9,7 @@ load_dotenv()
 token = os.getenv('csrf_token')
 cookie = os.getenv('cookie')
 
-# url, csrf_token, headers from targeted url
-url = "https://metsonline.dosm.gov.my/tradev2/product-coderesult"
+# csrf_token and headers for targeted site
 csrf_token = token
 headers = {
 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", 
@@ -68,5 +67,3 @@ def export_extract(url, start_year, end_year, max_retries):
         logger.info(f"FAILED: Data for {end_year} not able to be extracted")
     
     return raw_data
-
-export_extract(url, 2000, 2000,2)
