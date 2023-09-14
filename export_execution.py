@@ -7,4 +7,4 @@ start_year = result[0]
 end_year = result[1]
 
 raw_data = export_extract(start_year, end_year)
-export_prepare(raw_data)
+df = export_prepare(raw_data)
