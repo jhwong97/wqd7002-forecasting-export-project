@@ -16,5 +16,3 @@ def user_input():
             continue
         
     return start_year, end_year
-
-user_input()
