@@ -10,6 +10,6 @@ def wbg_prepare(datacode,wbg_raw_df):
     col_names.insert(0, 'Year')
     wbg_raw_df.columns = col_names
     wbg_df = wbg_raw_df
-    logger.info(wbg_df)
+    logger.debug(wbg_df)
     
     return wbg_df
