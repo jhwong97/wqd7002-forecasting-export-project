@@ -13,7 +13,7 @@ c_format = logging.Formatter('%(filename)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 
 # Create a file handler and set level to debug
-f_handler = logging.FileHandler('./project.log', mode='w')
+f_handler = logging.FileHandler('./project.log', mode='a')
 f_handler.setLevel(logging.DEBUG)
 # Set the format for the file handler
 f_format = logging.Formatter('%(asctime)s - %(levelname)-8s [%(filename)s:%(lineno)d] - %(message)s \n', datefmt= '%d-%b-%y %H:%M:%S')
