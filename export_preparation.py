@@ -3,7 +3,7 @@ from logging_export import logger
 import pandas as pd
 from bs4 import BeautifulSoup
 
-def export_prepare():
+def export_prepare(raw_data):
     
     result = BeautifulSoup(raw_data.text, 'html.parser') # Parse the HTML
     table = result.find('table', class_='table-bordered') # Look up for the table
