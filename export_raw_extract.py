@@ -16,7 +16,8 @@ headers = {
 "Cookie": cookie} 
 
 # Function to extract data
-def export_extract(url, start_year, end_year):
+def export_extract(start_year, end_year):
+    URL = 'https://metsonline.dosm.gov.my/tradev2/product-coderesult'
     
     payload_month = {
     '_csrf': csrf_token,
@@ -61,7 +62,7 @@ def export_extract(url, start_year, end_year):
     session.mount('https://', adapter)
     
     # Make a request using the session object
-    raw_data = session.post(url, data=payload_month, headers=headers)    
+    raw_data = session.post(URL, data=payload_month, headers=headers)    
     
     if raw_data.status_code == 200:
         logger.info(f"SUCCESS: Data for {end_year} has been extracted")
