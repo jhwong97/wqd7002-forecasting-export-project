@@ -1,4 +1,5 @@
 import wbgapi as wb
+import time
 from logging_export import logger
 
 def wbg_extract(datacode, country):
