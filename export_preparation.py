@@ -4,7 +4,6 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 def export_prepare():
-    raw_data = export_extract(url,start_year,end_year)
     
     result = BeautifulSoup(raw_data.text, 'html.parser') # Parse the HTML
     table = result.find('table', class_='table-bordered') # Look up for the table
