@@ -14,7 +14,7 @@ def wbg_extract(datacode, country):
                 break
             
             except Exception as e:
-                print(f"Error: {e}. Retrying in {RETRY_DELAY} seconds...")
+                logger.info(f"Error: {e}. Retrying in {RETRY_DELAY} seconds...")
                 time.sleep(RETRY_DELAY)
                 
     return wbg_raw_df
