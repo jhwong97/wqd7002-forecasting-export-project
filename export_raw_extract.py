@@ -5,7 +5,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 # Function to extract data
-def export_extract(url, payload, headers ,start_year, end_year):
+def export_extract(url, payload, headers, end_year):
     
     MAX_RETRIES = 2
     
