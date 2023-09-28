@@ -56,7 +56,7 @@ def export_etl(start_year=2001, end_year=2001, url=URL, payload=payload, headers
     cleandf = export_prepare(raw_data)
     
     # Save the df into .csv file
-    cleandf.to_csv('.\export-data-my.csv', index=False)
+    cleandf.to_csv('./export-data-my.csv', index=False)
     logger.info("Done")
 
 export_etl()
