@@ -1,10 +1,6 @@
 from export_raw_extract import export_extract
 from export_preparation import export_prepare
-from dotenv import load_dotenv
-from logging_export import logger
 from typing import Optional
-
-import os
 
 def export_etl(
     url,

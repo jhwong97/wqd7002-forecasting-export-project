@@ -1,4 +1,3 @@
-from export_raw_extract import export_extract
 from logging_export import logger
 import pandas as pd
 from bs4.element import Tag

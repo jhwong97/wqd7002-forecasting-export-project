@@ -1,12 +1,14 @@
-from dotenv import load_dotenv
 from logging_export import logger
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from bs4 import BeautifulSoup
+from typing import Optional
 
 # Function to extract raw data
-def export_extract(url, payload, headers):
+def export_extract(url,
+                   payload: Optional[dict] = None,
+                   headers: Optional[str] = None):
     
     MAX_RETRIES = 2
     
