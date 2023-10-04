@@ -3,9 +3,10 @@ from logging_export import logger
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from bs4 import BeautifulSoup
 
-# Function to extract data
-def export_extract(url, payload, headers, end_year):
+# Function to extract raw data
+def export_extract(url, payload, headers):
     
     MAX_RETRIES = 2
     
@@ -25,11 +26,15 @@ def export_extract(url, payload, headers, end_year):
     session.mount('https://', adapter)
     
     # Make a request using the session object
+    
     raw_data = session.post(url, data=payload, headers=headers)    
+    logger.info('Extracting raw data in progres......')
     
     if raw_data.status_code == 200:
-        logger.info(f"SUCCESS: Data for {end_year} has been extracted")
+        logger.info('SUCCESS: Raw Data has been extracted')
     else:
-        logger.info(f"FAILED: Data for {end_year} not able to be extracted")
+        logger.warning('FAILED: Raw Data failed to be extracted.')
+
+    raw_data = BeautifulSoup(raw_data.text, 'html.parser') # Parse the HTML
     
     return raw_data
