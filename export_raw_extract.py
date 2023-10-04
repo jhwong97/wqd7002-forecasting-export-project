@@ -27,7 +27,7 @@ def export_extract(url, payload, headers):
     
     # Make a request using the session object
     
-    raw_data = session.post(url, data=payload, headers=headers)    
+    raw_data = session.post(url, payload, headers)    
     logger.info('Extracting raw data in progres......')
     
     if raw_data.status_code == 200:
