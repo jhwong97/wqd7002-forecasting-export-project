@@ -9,7 +9,7 @@ c_handler = logging.StreamHandler()
 c_handler.setLevel(logging.INFO)
 
 # Set the format for the console handler
-c_format = logging.Formatter('%(filename)s - %(levelname)s - %(message)s')
+c_format = logging.Formatter('%(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 
 # Create a file handler and set level to debug
