@@ -24,3 +24,7 @@ A brief introduction on the research workflow adopted:
 4. **Macine Learning vs Statistical Models**: Machine learning regression models show better performance over statistical models due to their ability to handle complex and non-linear data, and can incorporate externabl variables to improve accuracy.
 5.  **Limitations of Statistical Models**: Models like ARIMA and SARIMA underperform primarily due to the complexity and non-linearity data of Malaysia's total export value.
 6. **Effectiveness of Machine Learning**: Machine learning regression models are deemed effective for forecasting Malaysia's total export value.
+
+## Recommendations for Future Works
+1. Broadening Research Scope: Future studies should aim to predict export values of specific commodities and explore other vairables affecting these values.
+2. Incorporating Ganular Data such as daily data in the models to improve accuracy and insights.
