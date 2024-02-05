@@ -16,3 +16,11 @@ A brief introduction on the research workflow adopted:
 - **Data Preparation** phase: Focuses on feature engineering processes - **variable selection**, **conversion to stationary data** and **data transformation** to ensure the attributes/variables from the dataset are compatible for EDA and modelling purposes.
 - **Modelling** phase: Implements statistical methods (**ARIMA** & **SARIMA**) and machine learning regression methods (**Random Forest**, **Linear Regression**, **Gradient Boosting** & **Support Vector Regressor**) to develop predictive models in forecasting Malaysia's total export value.
 - **Evaluation** phase: Evaluates the models' performance based on two performance metrics - **Root Mean Square Error (RMSE)** and **R-squared value (R<sup>2</sup>)**.
+
+## Research Outcomes
+1. Malaysia's total export value positively correlates with its total import value, world's total export value and the USDMYR exchange rate.
+2. Malaysia's total export value negatively correlates with Real Broad Effective Exchange Rate (RBEER).
+3. **Best Performing Model**: The Linear Regression model, using an 80:20 data split ratio on stationary data has the best performance compared to the other predictive models.
+4. **Macine Learning vs Statistical Models**: Machine learning regression models show better performance over statistical models due to their ability to handle complex and non-linear data, and can incorporate externabl variables to improve accuracy.
+5.  **Limitations of Statistical Models**: Models like ARIMA and SARIMA underperform primarily due to the complexity and non-linearity data of Malaysia's total export value.
+6. **Effectiveness of Machine Learning**: Machine learning regression models are deemed effective for forecasting Malaysia's total export value.
