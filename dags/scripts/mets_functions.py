@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from typing import Optional
 from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
+from dags.scripts.gc_functions import upload_to_bucket, upload_to_bigquery
 
 # Define a function for extracting raw data from METS Online
 def mets_extract(url,
@@ -123,9 +124,14 @@ def mets_transformation(df_list,
 def mets_etl(url, 
              dataframe_name,
              new_column_name,
+             storage_client,
+             bucket_name,
              payload: Optional[dict] = None,
              headers: Optional[dict] = None,):
     raw_data = mets_extract(url, payload=payload, headers=headers,)
     df_list = mets_preprocess(raw_data, dataframe_name)
     transformed_df_list = mets_transformation(df_list, new_column_name, dataframe_name)
-    return transformed_df_list
+    gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
+                                       bucket_name=bucket_name,
+                                       df_list=transformed_df_list)
+    return None
