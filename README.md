@@ -29,7 +29,8 @@ A brief introduction on the research workflow adopted:
 1. Broadening Research Scope: Future studies should aim to predict export values of specific commodities and explore other vairables affecting these values.
 2. Incorporating Ganular Data such as daily data in the models to improve accuracy and insights.
 
-## Data Processing Workflow
+## Guides for Replicating this Research Work
+### Data Processing Workflows
 The details of the data processing workflow can refer to [here](test_code_area.ipynb). It covers the following phases:
 - **ETL process** for each data sources (**Malaysia External Trade Statistics**, **Federal Reserve Economic Data** and **International Monetary Fund**).
 - **Data Query** from Google BigQuery and performed data integration using SQL joins.
