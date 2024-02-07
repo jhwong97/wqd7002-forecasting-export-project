@@ -1,4 +1,5 @@
 import logging
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional
@@ -44,3 +45,76 @@ def mets_extract(url,
     else:
         logging.error(f'Error: Fail to extract the raw data. ErrorCode: {raw_data.status_code}.')
 
+# Define a function for basic preprocessing on the extracted raw html text.
+def mets_preprocess(raw_data, 
+                    dataframe_name):
+    
+    # Look up for the table
+    result = raw_data.find('table', class_='table-bordered')
+    
+    # Extract table rows
+    rows = result.find_all('tr')
+    
+    individual_data = []
+    for row in rows:
+        data = row.find_all(['th', 'td'])
+        if data:
+            data = [item.get_text(strip=True) for item in data]
+            if 'GRAND TOTAL' not in data:
+                individual_data.append(data)
+    
+    logging.info('Converting raw data to dataframe......')
+    # Select a subset of columns from the first row as column names
+    df = pd.DataFrame(individual_data[1:], columns=individual_data[0])
+    # To remove the yearly data column due to redundancy 
+    data_month_filter = [col for col in df.columns if '-' not in col or not any(char.isdigit() for char in col)]
+    df_list = []
+    df_monthly = df.loc[:, data_month_filter]
+    df_monthly.name = dataframe_name
+    df_list.append(df_monthly)
+    logging.info(f'SUCCESS: {dataframe_name} has been created')
+    
+    return df_list
+
+# Define a function for simple data transformation to ensure the dataset is compatiable with Google BigQuery Schema
+def mets_transformation(df_list, 
+                        new_column_name, 
+                        dataframe_name):
+    
+    transformed_df_list = []
+    replacements = {' ': '_',
+                    '&': '',
+                    ',': '',
+                    '.': '',}
+    try:
+        for item in df_list:
+            df = item.transpose().reset_index()
+            column_name = list(df.iloc[2,:])
+            edited_column_name = []
+
+            # To replace the selected symbols and empty spaces
+            for column in column_name:
+                for old, new in replacements.items():
+                    column = column.replace(old, new)
+                edited_column_name.append(column)
+
+            df = df.iloc[3:]
+            df.columns = edited_column_name
+            df = df.rename(columns={'PRODUCT_DESCRIPTION': 'date'})
+
+            # To convert the 'date' column to datetime format, whereas the others are converted to numeric.
+            for column in df.columns:
+                if column == 'date':
+                    df[column] = pd.to_datetime(df[column])
+                else:
+                    df[column] = pd.to_numeric(df[column].str.replace(',', ''))
+
+            # Create a new column which sum all the values from other columns in the same row
+            df[new_column_name] = df.iloc[:,1:].sum(axis=1)
+            df.name = dataframe_name
+
+            transformed_df_list.append(df)
+            logging.info(f"SUCCESS: Dataframe - {dataframe_name} has been transformed.")
+            return transformed_df_list
+    except Exception as e:
+        logging.error(f"Error: {e}")
