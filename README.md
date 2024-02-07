@@ -31,10 +31,11 @@ A brief introduction on the research workflow adopted:
 
 ## Guides for Replicating this Research Work
 ### Data Processing Workflows
-The details of the data processing workflow can refer to [here](test_code_area.ipynb). It covers the following phases:
-- **ETL process** for each data sources (**Malaysia External Trade Statistics**, **Federal Reserve Economic Data** and **International Monetary Fund**).
-- **Data Query** from Google BigQuery and performed data integration using SQL joins.
-- **Data Modification** to conduct feature engineering process like data transformation to prepare the dataset for exploratory data analysis and modelling purporses.
-- **Data Exploration** and **Date Correlation** to plot charts to explore the complex relationships between the variables by plotting charts using `matplotlib` and `seaborn`.
-- Checked for data stationarity using Augmented Dickey Fuller (ADF) test via `statsmodels` and perform first order differencing to convert non-stationary time-series data to stationary.
-- Developed **statistical models** (**ARIMA** and **SARIMA**) and **machine learning regression models** (**Linear Regression, Support Vector Regressor, Random Forest, Gradient Boosting**) to predct Malaysia's total export value. The results of the charts plotted are stored in [here](/images/). The modelling part is carried out using python packages like `sklearn` and `pmdarima`.
+1. Install all the necessary python packages according to this [requirements.txt](requirements.txt).
+2. Follow the procedures of the data processing workflow according to [this](test_code_area.ipynb). It covers the following phases:
+    - **ETL process** for each data sources (**Malaysia External Trade Statistics**, **Federal Reserve Economic Data** and **International Monetary Fund**).
+    - **Data Query** from Google BigQuery and performed data integration using SQL joins.
+    - **Data Modification** to conduct feature engineering process like data transformation to prepare the dataset for exploratory data analysis and modelling purporses.
+    - **Data Exploration** and **Date Correlation** to plot charts to explore the complex relationships between the variables by plotting charts using `matplotlib` and `seaborn`.
+    - Checked for data stationarity using Augmented Dickey Fuller (ADF) test via `statsmodels` and perform first order differencing to convert non-stationary time-series data to stationary.
+    - Developed **statistical models** (**ARIMA** and **SARIMA**) and **machine learning regression models** (**Linear Regression, Support Vector Regressor, Random Forest, Gradient Boosting**) to predct Malaysia's total export value. The results of the charts plotted are stored in [here](/images/). The modelling part is carried out using python packages like `sklearn` and `pmdarima`.
