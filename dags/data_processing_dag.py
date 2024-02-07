@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from scripts.mets_functions import mets_etl
+from scripts.fred_functions import fred_etl
 from dotenv import load_dotenv
 from google.cloud import storage
 from google.cloud import bigquery
@@ -101,6 +102,10 @@ dataframe_name_t2 = "malaysia_import"
 new_column_name_t2 = "my_total_import"
 table_name_t2 = ['malaysia_import']
 
+# Task 3
+FRED_API = os.getenv("FRED_API")
+selected_data_t3 = ['EXMAUS', 'RBMYBIS']
+table_name_t3 = ['EXMAUS', 'RBMYBIS']
 
 default_args = {
     'owner': 'albert',
@@ -165,5 +170,19 @@ with DAG(
                    "headers": headers}
     )
     
+    task3 = PythonOperator(
+        task_id='fred_etl',
+        python_callable=fred_etl,
+        op_kwargs={"FRED_API": FRED_API,
+                   "selected_data": selected_data_t3,
+                   "storage_client": storage_client,
+                   "bucket_name": bucket_name,
+                   "bq_client": bq_client,
+                   "dataset_name": dataset_name,
+                   "table_name": table_name_t3,
+                   "job_config":job_config,
+                   }
+    )
     task1
     task2
+    task3
