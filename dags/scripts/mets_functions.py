@@ -118,3 +118,14 @@ def mets_transformation(df_list,
             return transformed_df_list
     except Exception as e:
         logging.error(f"Error: {e}")
+        
+# Define a function to execute the full ETL process for METS
+def mets_etl(url, 
+             dataframe_name,
+             new_column_name,
+             payload: Optional[dict] = None,
+             headers: Optional[dict] = None,):
+    raw_data = mets_extract(url, payload=payload, headers=headers,)
+    df_list = mets_preprocess(raw_data, dataframe_name)
+    transformed_df_list = mets_transformation(df_list, new_column_name, dataframe_name)
+    return transformed_df_list
