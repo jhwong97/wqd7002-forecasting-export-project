@@ -70,6 +70,37 @@ job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
                                         write_disposition='WRITE_TRUNCATE',
                                         skip_leading_rows=1,
                                         autodetect=True,)
+# Task 2
+# payload of targeted site
+payload_import = {
+    "_csrf": csrf_token,
+    "Tradev2[typeofsearch]": "classification",
+    "Tradev2[typedigit]": 7,
+    "Tradev2[rangecode1]": 0,
+    "Tradev2[rangecode2]": 9,
+    # 'Tradev2[code_idcode]': ,
+    # 'Tradev2[code_idcodedigit9]': ,
+    # 'Tradev2[tradeflow]': ,
+    "Tradev2[tradeflow][]": "imports",
+    # 'Tradev2[timeframe]': ,
+    "Tradev2[timeframe]": "month",
+    # 'Tradev2[rangeyear]': ,
+    # 'Tradev2[rangeyear2]': ,
+    # 'Tradev2[rangeyearone]': ,
+    # 'Tradev2[rangemonthone]': ,
+    "Tradev2[mothdata]": 2000,
+    "Tradev2[mothdata2]": 2023,
+    # 'Tradev2[classification_serch]': ,
+    # 'Tradev2[country2]': ,
+    "Tradev2[geogroup]": 1,
+    "Tradev2[geogroup]": 29,
+    "Tradev2[codeshowby]": "code",
+}
+
+dataframe_name_t2 = "malaysia_import"
+new_column_name_t2 = "my_total_import"
+table_name_t2 = ['malaysia_import']
+
 
 default_args = {
     'owner': 'albert',
@@ -118,4 +149,21 @@ with DAG(
                    "headers": headers}
     )
     
+    task2 = PythonOperator(
+        task_id='mets_import_etl',
+        python_callable=mets_etl,
+        op_kwargs={"url": url,
+                   "dataframe_name": dataframe_name_t2,
+                   "new_column_name": new_column_name_t2,
+                   "storage_client": storage_client,
+                   "bucket_name": bucket_name,
+                   "bq_client": bq_client,
+                   "dataset_name": dataset_name,
+                   "table_name": table_name_t2,
+                   "job_config":job_config,
+                   "payload": payload_import,
+                   "headers": headers}
+    )
+    
     task1
+    task2
