@@ -47,7 +47,7 @@ def fred_etl(FRED_API,
              ):
     try:
         df_list = fred_data_extraction(FRED_API=FRED_API, selected_data=selected_data)
-        transformed_df_list = fred_transformation(df_listd=df_list, selected_data=selected_data)
+        transformed_df_list = fred_transformation(df_list=df_list, selected_data=selected_data)
         gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
                                         bucket_name=bucket_name,
                                         df_list=transformed_df_list)
