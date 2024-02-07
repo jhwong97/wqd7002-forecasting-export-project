@@ -4,7 +4,7 @@ import os
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
-from dags.scripts.mets_functions import mets_etl
+from scripts.mets_functions import mets_etl
 from dotenv import load_dotenv
 from google.cloud import storage
 from google.cloud import bigquery
@@ -60,10 +60,11 @@ payload_export = {
 }
 
 dataframe_name = "malaysia_export"
+new_column_name = "my_total_export"
 storage_client = storage.Client()
-bucket_name = 'wqd7002-project'
+bucket_name = 'wqd7002_project'
 bq_client = bigquery.Client()
-dataset_name = 'wqd7002-project'
+dataset_name = 'wqd7002_project'
 table_name = 'malaysia_export'
 job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
                                         write_disposition='WRITE_TRUNCATE',
@@ -96,7 +97,7 @@ default_args = {
 with DAG(
     dag_id='data_processing',
     default_args=default_args,
-    descriptions="ETL, Data Query, EDA, Modelling",
+    description="ETL, Data Query, EDA, Modelling",
     schedule='@monthly',
     tags=['international trade']
 ) as dag:
@@ -106,6 +107,7 @@ with DAG(
         python_callable=mets_etl,
         op_kwargs={"url": url,
                    "dataframe_name": dataframe_name,
+                   "new_column_name": new_column_name,
                    "storage_client": storage_client,
                    "bucket_name": bucket_name,
                    "bq_client": bq_client,
