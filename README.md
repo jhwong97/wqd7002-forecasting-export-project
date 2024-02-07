@@ -39,3 +39,23 @@ A brief introduction on the research workflow adopted:
     - **Data Exploration** and **Date Correlation** to plot charts to explore the complex relationships between the variables by plotting charts using `matplotlib` and `seaborn`.
     - Checked for data stationarity using Augmented Dickey Fuller (ADF) test via `statsmodels` and perform first order differencing to convert non-stationary time-series data to stationary.
     - Developed **statistical models** (**ARIMA** and **SARIMA**) and **machine learning regression models** (**Linear Regression, Support Vector Regressor, Random Forest, Gradient Boosting**) to predct Malaysia's total export value. The results of the charts plotted are stored in [here](/images/). The modelling part is carried out using python packages like `sklearn` and `pmdarima`.
+
+### Setting Up Airflow using Docker for Windows
+The procedures for setting up the airflow using Docker are as below:-
+1. Download the docker desktop installer and install it.
+2. Get the docker-compose.yaml file using either one of the commands:
+    ```
+    curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.8.1/docker-compose.yaml'
+    ```
+    or
+    ```
+    Invoke-WebRequest -Uri 'https://airflow.apache.org/docs/apache-airflow/2.8.1/docker-compose.yaml' -OutFile 'docker-compose.yaml'
+    ```
+    For details information of the file refer to this [guide](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html`).
+3. For OS systems other than Linux, create an .env file in the same folder as docker-compose.yaml with the below content and add in the following line:
+    `AIRFLOW_UID=50000`
+4. Execute the below command to initiate the airflow.
+    `docker compose up airflow-init`
+5. Run `docker compose up -d` to start the docker images in the background.
+
+***Notes**: The WSL2 should be installed in your window systems to run the Docker Desktop.*
