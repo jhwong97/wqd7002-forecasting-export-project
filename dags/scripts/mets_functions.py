@@ -126,6 +126,10 @@ def mets_etl(url,
              new_column_name,
              storage_client,
              bucket_name,
+             bq_client,
+             dataset_name,
+             table_name,
+             job_config,
              payload: Optional[dict] = None,
              headers: Optional[dict] = None,):
     raw_data = mets_extract(url, payload=payload, headers=headers,)
@@ -134,4 +138,9 @@ def mets_etl(url,
     gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
                                        bucket_name=bucket_name,
                                        df_list=transformed_df_list)
+    upload_to_bigquery(client=bq_client,
+                       dataset_name=dataset_name,
+                       table_name=table_name,
+                       job_config=job_config,
+                       gsutil_uri=gsutil_uri_list)
     return None
