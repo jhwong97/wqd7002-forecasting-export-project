@@ -65,7 +65,7 @@ storage_client = storage.Client()
 bucket_name = 'wqd7002_project'
 bq_client = bigquery.Client()
 dataset_name = 'wqd7002_project'
-table_name = 'malaysia_export'
+table_name = ['malaysia_export']
 job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
                                         write_disposition='WRITE_TRUNCATE',
                                         skip_leading_rows=1,
