@@ -1,11 +1,12 @@
 import logging
 import pandas as pd
 import requests
+from airflow.exceptions import AirflowFailException
 from bs4 import BeautifulSoup
 from typing import Optional
 from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
-from dags.scripts.gc_functions import upload_to_bucket, upload_to_bigquery
+from scripts.gc_functions import upload_to_bucket, upload_to_bigquery
 
 # Define a function for extracting raw data from METS Online
 def mets_extract(url,
@@ -45,6 +46,7 @@ def mets_extract(url,
 
     else:
         logging.error(f'Error: Fail to extract the raw data. ErrorCode: {raw_data.status_code}.')
+        raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Define a function for basic preprocessing on the extracted raw html text.
 def mets_preprocess(raw_data, 
@@ -119,7 +121,8 @@ def mets_transformation(df_list,
             return transformed_df_list
     except Exception as e:
         logging.error(f"Error: {e}")
-        
+        raise AirflowFailException('Failure of the task due to encountered error.')
+    
 # Define a function to execute the full ETL process for METS
 def mets_etl(url, 
              dataframe_name,
@@ -132,15 +135,19 @@ def mets_etl(url,
              job_config,
              payload: Optional[dict] = None,
              headers: Optional[dict] = None,):
-    raw_data = mets_extract(url, payload=payload, headers=headers,)
-    df_list = mets_preprocess(raw_data, dataframe_name)
-    transformed_df_list = mets_transformation(df_list, new_column_name, dataframe_name)
-    gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
-                                       bucket_name=bucket_name,
-                                       df_list=transformed_df_list)
-    upload_to_bigquery(client=bq_client,
-                       dataset_name=dataset_name,
-                       table_name=table_name,
-                       job_config=job_config,
-                       gsutil_uri=gsutil_uri_list)
-    return None
+    try:
+        raw_data = mets_extract(url, payload=payload, headers=headers,)
+        df_list = mets_preprocess(raw_data, dataframe_name)
+        transformed_df_list = mets_transformation(df_list, new_column_name, dataframe_name)
+        gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
+                                        bucket_name=bucket_name,
+                                        df_list=transformed_df_list)
+        upload_to_bigquery(client=bq_client,
+                        dataset_name=dataset_name,
+                        table_name=table_name,
+                        job_config=job_config,
+                        gsutil_uri=gsutil_uri_list)
+        return None
+    
+    except:
+        raise AirflowFailException('Failure of the task due to encountered error.')

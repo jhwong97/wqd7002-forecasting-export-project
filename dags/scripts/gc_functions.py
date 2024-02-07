@@ -1,4 +1,5 @@
 import logging
+from airflow.exceptions import AirflowFailException
 from google.cloud.exceptions import NotFound
 
 # Define a function for uploading data to Google Storage Bucket    
@@ -19,6 +20,7 @@ def upload_to_bucket(storage_client,
             
         except Exception as e:
             logging.info(f"Error creating bucket: {e}")
+            raise AirflowFailException('Failure of the task due to encountered error.')
                   
     else:
         logging.info(f"Bucket - {bucket_name} is found.")
@@ -40,6 +42,7 @@ def upload_to_bucket(storage_client,
 
     except Exception as e:
         logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
         
 # Define a function to load data from google bucket to google bigquery
 def upload_to_bigquery(client, dataset_name, table_name, job_config, gsutil_uri):
