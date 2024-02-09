@@ -129,7 +129,7 @@ def mets_extract(url,
              payload: Optional[dict] = None,
              headers: Optional[dict] = None,):
     try:
-        raw_data = mets_extract(url, payload=payload, headers=headers,)
+        raw_data = mets_request(url, payload=payload, headers=headers,)
         raw_df_list = mets_preprocess(raw_data, dataframe_name)
         return raw_df_list
     
