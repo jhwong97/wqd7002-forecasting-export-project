@@ -31,7 +31,7 @@ def fred_transformation(df_list, selected_data):
         df = df.rename(columns={'value': selected_data[i]})
         df = df.drop_duplicates(subset='date')
         df.name = selected_data[i]
-        print(f"SUCCESS: {selected_data[i]} dataset has been transformed.")
+        logging.info(f"SUCCESS: {selected_data[i]} dataset has been transformed.")
         transformed_df_list.append(df)
     return transformed_df_list
 
