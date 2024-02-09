@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from scripts.gc_functions import upload_to_bucket, upload_to_bigquery
 
 # Define a function for extracting raw data from METS Online
-def mets_extract(url,
+def mets_request(url,
                  payload: Optional[dict] = None,
                  headers: Optional[dict] = None):
     
@@ -124,30 +124,14 @@ def mets_transformation(df_list,
         raise AirflowFailException('Failure of the task due to encountered error.')
     
 # Define a function to execute the full ETL process for METS
-def mets_etl(url, 
+def mets_extract(url, 
              dataframe_name,
-             new_column_name,
-             storage_client,
-             bucket_name,
-             bq_client,
-             dataset_name,
-             table_name,
-             job_config,
              payload: Optional[dict] = None,
              headers: Optional[dict] = None,):
     try:
         raw_data = mets_extract(url, payload=payload, headers=headers,)
-        df_list = mets_preprocess(raw_data, dataframe_name)
-        transformed_df_list = mets_transformation(df_list, new_column_name, dataframe_name)
-        gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
-                                        bucket_name=bucket_name,
-                                        df_list=transformed_df_list)
-        upload_to_bigquery(client=bq_client,
-                        dataset_name=dataset_name,
-                        table_name=table_name,
-                        job_config=job_config,
-                        gsutil_uri=gsutil_uri_list)
-        return None
+        raw_df_list = mets_preprocess(raw_data, dataframe_name)
+        return raw_df_list
     
     except:
         raise AirflowFailException('Failure of the task due to encountered error.')
