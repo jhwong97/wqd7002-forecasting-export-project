@@ -5,7 +5,8 @@ from google.cloud.exceptions import NotFound
 # Define a function for uploading data to Google Storage Bucket    
 def upload_to_bucket(storage_client,
                      bucket_name,
-                     df_list):
+                     df_list,
+                     content_type):
     if df_list is None:
         logging.warning("Please ensure df_list has a value.")
     
@@ -34,7 +35,7 @@ def upload_to_bucket(storage_client,
             blob_name = item.name
             blob = my_bucket.blob(blob_name)
             logging.info(f"Uploading data to Google Storage Bucket in progress ...")
-            blob.upload_from_string(item.to_csv(index=False), 'text/csv')
+            blob.upload_from_string(item.to_csv(index=False), content_type = content_type)
             logging.info(f'SUCCESS: {blob} has successfully uploaded to {my_bucket}.')
             gsutil_uri = f"gs://{bucket_name}/{blob_name}"
             gsutil_uri_list.append(gsutil_uri) 
