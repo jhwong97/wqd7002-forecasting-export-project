@@ -62,6 +62,9 @@ payload_export = {
 
 storage_client = storage.Client()
 bq_client = bigquery.Client()
+bucket_name_t1 = "wqd7002_project"
+blob_name_t1 = ["my_export_request.html"]
+file_format_t1 = "html"
 
 # Task2
 
@@ -100,6 +103,10 @@ with DAG(
         task_id='raw_html_extract',
         python_callable=mets_extract_html,
         op_kwargs={"url": url,
+                   "client": storage_client,
+                   "bucket_name": bucket_name_t1,
+                   "blob_name": blob_name_t1,
+                   "file_format": file_format_t1,
                    "payload": payload_export,
                    "headers": headers}
     )
