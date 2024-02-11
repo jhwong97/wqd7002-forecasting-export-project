@@ -242,7 +242,7 @@ def imf_transformation(gcs_uri_list,
         
         except Exception as e:
             logging.error(f"Error: {e}")
-        raise AirflowFailException('Failure of the task due to encountered error.')
+            raise AirflowFailException('Failure of the task due to encountered error.')
     
     try:
         gcs_uri_list = upload_to_bucket(data_list=transformed_df_list,
