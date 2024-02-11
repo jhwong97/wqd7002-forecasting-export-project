@@ -28,7 +28,7 @@ def upload_to_bucket(data_list,
             raise AirflowFailException('Failure of the task due to encountered error.')
    
     try:
-        # To create a list to store the gcs uri 
+        # To create a list to store the g uri 
         gcs_uri_list = []
         for i in range(len(data_list)):
             # timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S ')
@@ -53,7 +53,7 @@ def upload_to_bucket(data_list,
         raise AirflowFailException('Failure of the task due to encountered error.')
         
 # Define a function to load data from google bucket to google bigquery
-def upload_to_bigquery(client, dataset_name, table_name, job_config, gsutil_uri):
+def upload_to_bigquery(client, dataset_name, table_name, job_config, gcs_uri_list):
     try:
         for i in range(len(table_name)): 
             # Look up for dataset
@@ -81,7 +81,7 @@ def upload_to_bigquery(client, dataset_name, table_name, job_config, gsutil_uri)
                 logging.info(f'Table {targeted_table.table_id} created.')
 
             # Upload the data to bigquery table using gsutil URI
-            load_job = client.load_table_from_uri(gsutil_uri[i],
+            load_job = client.load_table_from_uri(gcs_uri_list[i],
                                                   targeted_table, 
                                                   job_config=job_config)
 
@@ -90,3 +90,4 @@ def upload_to_bigquery(client, dataset_name, table_name, job_config, gsutil_uri)
         
     except Exception as e:
         logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')        
