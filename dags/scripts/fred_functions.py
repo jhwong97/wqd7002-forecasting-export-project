@@ -35,7 +35,7 @@ def fred_data_extraction(FRED_API, selected_data, client, bucket_name, blob_name
         raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Function to perform data transformation such as changing the data type and renaming column name
-def fred_transformation(selected_data, client, bucket_name, blob_name, file_format):
+def fred_transformation(gcs_uri_list, selected_data, client, bucket_name, blob_name, file_format):
 
     data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
 
