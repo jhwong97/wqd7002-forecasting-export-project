@@ -61,7 +61,6 @@ payload_export = {
 }
 
 storage_client = storage.Client()
-bq_client = bigquery.Client()
 bucket_name_t1 = "wqd7002_project"
 blob_name_t1 = ["my_export_request.html"]
 file_format_t1 = "html"
@@ -94,7 +93,26 @@ def mets_transformation_ti(ti, client, new_column_name, bucket_name, blob_name, 
 new_column_name_t3 = "my_total_export"
 blob_name_t3 = ["my_export_transformed_data.csv"]
 file_format_t3 = "csv"
-    
+
+# Task4
+def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
+    gcs_uri_list_transformed = ti.xcom_pull(task_ids = "raw_data_transformation")
+    upload_to_bigquery(client=client,
+                       dataset_name=dataset_name,
+                       table_name=table_name,
+                       job_config=job_config,
+                       gcs_uri_list=gcs_uri_list_transformed)
+    return
+
+bq_client = bigquery.Client()
+dataset_name_t4 = "wqd7002_project"
+table_name_t4 = ["malaysia_export"]
+job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
+                                    write_disposition='WRITE_TRUNCATE',
+                                    skip_leading_rows=1,
+                                    autodetect=True,)
+
+# Dag configurations part
 default_args = {
     'owner': 'albert',
     'email': ['albertwong345@gmail.com'],
@@ -157,4 +175,13 @@ with DAG(
                    "file_format": file_format_t3,}
     )
     
-    task1 >> task2 >> task3
+    task4 = PythonOperator(
+        task_id='upload_to_bigquery',
+        python_callable=upload_to_bigquery_ti,
+        op_kwargs={"client": bq_client,
+                   "dataset_name": dataset_name_t4,
+                   "table_name": table_name_t4,
+                   "job_config": job_config,}
+    )
+    
+    task1 >> task2 >> task3 >> task4
