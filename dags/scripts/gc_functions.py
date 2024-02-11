@@ -3,14 +3,18 @@ from airflow.exceptions import AirflowFailException
 from google.cloud.exceptions import NotFound
 
 # Define a function for uploading data to Google Storage Bucket    
-def upload_to_bucket(storage_client,
+# Define a function for uploading data to Google Storage Bucket    
+def upload_to_bucket(data_list,
+                     client,
                      bucket_name,
-                     df_list,
-                     content_type):
-    if df_list is None:
-        logging.warning("Please ensure df_list has a value.")
+                     blob_name,
+                     file_format,):
     
-    my_bucket = storage_client.bucket(bucket_name)
+    if data_list is None:
+        logging.warning("Please ensure data_list has a value.")
+        return
+    
+    my_bucket = client.bucket(bucket_name)
     # Check if the specified bucet_name exists or not
     if not my_bucket.exists(): # If the bucket does not exist
         try:
@@ -22,24 +26,27 @@ def upload_to_bucket(storage_client,
         except Exception as e:
             logging.info(f"Error creating bucket: {e}")
             raise AirflowFailException('Failure of the task due to encountered error.')
-                  
-    else:
-        logging.info(f"Bucket - {bucket_name} is found.")
    
     try:
-        # To create a list to store the gsutil uri 
-        gsutil_uri_list = []
-        for item in df_list:
+        # To create a list to store the gcs uri 
+        gcs_uri_list = []
+        for i in range(len(data_list)):
             # timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S ')
             # blob_name = item.name + " " + timestamp
-            blob_name = item.name
-            blob = my_bucket.blob(blob_name)
-            logging.info(f"Uploading data to Google Storage Bucket in progress ...")
-            blob.upload_from_string(item.to_csv(index=False), content_type = content_type)
+            blob = my_bucket.blob(blob_name[i])
+            logging.info(f"Uploading file to GCS in progress ...")
+            if file_format == "csv":
+                blob.upload_from_string(data_list[i].to_csv(index=False), content_type='text/csv')
+            elif file_format == "txt" or file_format == "html":
+                blob.upload_from_string(data_list[i])
+            else:
+                logging.error(f"The file format - {file_format} is not supported.")
+                raise AirflowFailException('Failure of the task due to encountered error.')
+ 
             logging.info(f'SUCCESS: {blob} has successfully uploaded to {my_bucket}.')
-            gsutil_uri = f"gs://{bucket_name}/{blob_name}"
-            gsutil_uri_list.append(gsutil_uri) 
-        return gsutil_uri_list
+            gcs_uri = f"gs://{bucket_name}/{blob_name[i]}"
+            gcs_uri_list.append(gcs_uri) 
+        return gcs_uri_list
 
     except Exception as e:
         logging.error(f"Error: {e}")
