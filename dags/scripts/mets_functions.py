@@ -68,7 +68,11 @@ def mets_extract_html(url,
 
 # Define a function for basic preprocessing on the extracted raw html text.
 def mets_preprocess(gcs_uri_list,
-                    client):
+                    client,
+                    bucket_name,
+                    blob_name,
+                    file_format):
+    
     data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
     df_list = []
     try:
@@ -97,8 +101,19 @@ def mets_preprocess(gcs_uri_list,
             df_monthly = df.loc[:, data_month_filter]
             df_list.append(df_monthly)
             logging.info(f'SUCCESS: Dataframe has been created')
-        return df_list
         
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
     except Exception as e:
         logging.error(f"Error: {e}")
         raise AirflowFailException('Failure of the task due to encountered error.')
@@ -106,7 +121,10 @@ def mets_preprocess(gcs_uri_list,
 # Define a function for simple data transformation to ensure the dataset is compatiable with Google BigQuery Schema
 def mets_transformation(gcs_uri_list,
                         client,
-                        new_column_name,):
+                        new_column_name,
+                        bucket_name,
+                        blob_name,
+                        file_format):
     
     data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
 
@@ -144,8 +162,19 @@ def mets_transformation(gcs_uri_list,
 
             transformed_df_list.append(df)
             logging.info(f"SUCCESS: Transformed Dataframe has been created.")
-        return transformed_df_list
-        
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=transformed_df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
     except Exception as e:
         logging.error(f"Error: {e}")
         raise AirflowFailException('Failure of the task due to encountered error.')
