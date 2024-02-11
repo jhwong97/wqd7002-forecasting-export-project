@@ -7,10 +7,14 @@ from bs4 import BeautifulSoup
 from typing import Optional
 from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
-from scripts.gc_functions import read_file_from_gcs
+from scripts.gc_functions import read_file_from_gcs, upload_to_bucket
 
 # Define a function for extracting raw data from METS Online
 def mets_extract_html(url,
+                      client,
+                      bucket_name,
+                      blob_name,
+                      file_format,
                       payload: Optional[dict] = None,
                       headers: Optional[dict] = None):
     
@@ -44,11 +48,23 @@ def mets_extract_html(url,
         # Parse the HTML
         # result = BeautifulSoup(raw_html.text, 'html.parser')
         data_list.append(result)
-        return data_list
 
     else:
         logging.error(f'Error: Fail to extract the raw data. ErrorCode: {raw_html.status_code}.')
         raise AirflowFailException('Failure of the task due to encountered error.')
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=data_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
+    
 
 # Define a function for basic preprocessing on the extracted raw html text.
 def mets_preprocess(gcs_uri_list,
