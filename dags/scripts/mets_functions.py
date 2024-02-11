@@ -1,4 +1,5 @@
 import logging
+import io
 import pandas as pd
 import requests
 from airflow.exceptions import AirflowFailException
@@ -6,12 +7,12 @@ from bs4 import BeautifulSoup
 from typing import Optional
 from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
-from scripts.gc_functions import upload_to_bucket, upload_to_bigquery
+from scripts.gc_functions import read_file_from_gcs
 
 # Define a function for extracting raw data from METS Online
-def mets_request(url,
-                 payload: Optional[dict] = None,
-                 headers: Optional[dict] = None):
+def mets_extract_html(url,
+                      payload: Optional[dict] = None,
+                      headers: Optional[dict] = None):
     
     # Specify the maximum number of retry
     MAX_RETRIES = 5
@@ -32,65 +33,75 @@ def mets_request(url,
     
     logging.info("Extracting raw data in progress ...")
     # Make a request using the created session object
-    raw_data = session.post(url,
+    raw_html = session.post(url,
                             data = payload,
                             headers = headers,
                             verify = False)
-    
-    if raw_data.status_code == 200:
+    data_list = []
+    if raw_html.status_code == 200:
         logging.info('SUCCESS: Raw Data has been extracted.')
-
+        result = raw_html.content
         # Parse the HTML
-        raw_data = BeautifulSoup(raw_data.text, 'html.parser')
-        return raw_data
+        # result = BeautifulSoup(raw_html.text, 'html.parser')
+        data_list.append(result)
+        return data_list
 
     else:
-        logging.error(f'Error: Fail to extract the raw data. ErrorCode: {raw_data.status_code}.')
+        logging.error(f'Error: Fail to extract the raw data. ErrorCode: {raw_html.status_code}.')
         raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Define a function for basic preprocessing on the extracted raw html text.
-def mets_preprocess(raw_data, 
-                    dataframe_name):
-    
-    # Look up for the table
-    result = raw_data.find('table', class_='table-bordered')
-    
-    # Extract table rows
-    rows = result.find_all('tr')
-    
-    individual_data = []
-    for row in rows:
-        data = row.find_all(['th', 'td'])
-        if data:
-            data = [item.get_text(strip=True) for item in data]
-            if 'GRAND TOTAL' not in data:
-                individual_data.append(data)
-    
-    logging.info('Converting raw data to dataframe......')
-    # Select a subset of columns from the first row as column names
-    df = pd.DataFrame(individual_data[1:], columns=individual_data[0])
-    # To remove the yearly data column due to redundancy 
-    data_month_filter = [col for col in df.columns if '-' not in col or not any(char.isdigit() for char in col)]
+def mets_preprocess(gcs_uri_list,
+                    client):
+    data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
     df_list = []
-    df_monthly = df.loc[:, data_month_filter]
-    df_monthly.name = dataframe_name
-    df_list.append(df_monthly)
-    logging.info(f'SUCCESS: {dataframe_name} has been created')
-    
-    return df_list
+    try:
+        for item in data_list:
+            html_content = BeautifulSoup(item, 'html.parser')
+            logging.info("Extracting data from from html contents in progress ...")
+            # Look up for the table
+            result = html_content.find('table', class_='table-bordered')
+
+            # Extract table rows
+            rows = result.find_all('tr')
+
+            individual_data = []
+            for row in rows:
+                data = row.find_all(['th', 'td'])
+                if data:
+                    data = [item.get_text(strip=True) for item in data]
+                    if 'GRAND TOTAL' not in data:
+                        individual_data.append(data)
+
+            logging.info('Converting raw extracted data to dataframe in progress ...')
+            # Select a subset of columns from the first row as column names
+            df = pd.DataFrame(individual_data[1:], columns=individual_data[0])
+            # To remove the yearly data column due to redundancy 
+            data_month_filter = [col for col in df.columns if '-' not in col or not any(char.isdigit() for char in col)]
+            df_monthly = df.loc[:, data_month_filter]
+            df_list.append(df_monthly)
+            logging.info(f'SUCCESS: Dataframe has been created')
+        return df_list
+        
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Define a function for simple data transformation to ensure the dataset is compatiable with Google BigQuery Schema
-def mets_transformation(df_list, 
-                        new_column_name, 
-                        dataframe_name):
+def mets_transformation(gcs_uri_list,
+                        client,
+                        new_column_name,):
     
+    data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
+
     transformed_df_list = []
     replacements = {' ': '_',
                     '&': '',
                     ',': '',
                     '.': '',}
     try:
-        for item in df_list:
+        for item in data_list:
+            item = pd.read_csv(io.BytesIO(item))
             df = item.transpose().reset_index()
             column_name = list(df.iloc[2,:])
             edited_column_name = []
@@ -114,24 +125,11 @@ def mets_transformation(df_list,
 
             # Create a new column which sum all the values from other columns in the same row
             df[new_column_name] = df.iloc[:,1:].sum(axis=1)
-            df.name = dataframe_name
 
             transformed_df_list.append(df)
-            logging.info(f"SUCCESS: Dataframe - {dataframe_name} has been transformed.")
-            return transformed_df_list
+            logging.info(f"SUCCESS: Transformed Dataframe has been created.")
+        return transformed_df_list
+        
     except Exception as e:
         logging.error(f"Error: {e}")
-        raise AirflowFailException('Failure of the task due to encountered error.')
-    
-# Define a function to execute the full ETL process for METS
-def mets_extract(url, 
-             dataframe_name,
-             payload: Optional[dict] = None,
-             headers: Optional[dict] = None,):
-    try:
-        raw_data = mets_request(url, payload=payload, headers=headers,)
-        raw_df_list = mets_preprocess(raw_data, dataframe_name)
-        return raw_df_list
-    
-    except:
         raise AirflowFailException('Failure of the task due to encountered error.')
