@@ -43,6 +43,24 @@ def imf_transformation_ti(ti, client, bucket_name, blob_name, file_format):
 blob_name_t2 = ["world_export_transformed_data.csv"]
 file_format_t2 = "csv"
 
+# Task 3
+def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
+    gcs_uri_list_transformed = ti.xcom_pull(task_ids = "data_transformation")
+    upload_to_bigquery(client=client,
+                       dataset_name=dataset_name,
+                       table_name=table_name,
+                       job_config=job_config,
+                       gcs_uri_list=gcs_uri_list_transformed)
+    return
+
+bq_client = bigquery.Client()
+dataset_name_t3 = "wqd7002_project"
+table_name_t3 = ["world_export"]
+job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
+                                    write_disposition='WRITE_TRUNCATE',
+                                    skip_leading_rows=1,
+                                    autodetect=True,)
+
 # Dag configurations part
 default_args = {
     'owner': 'albert',
@@ -98,4 +116,13 @@ with DAG(
                    "file_format": file_format_t2,}
     )
     
-    task1 >> task2
+    task3 = PythonOperator(
+        task_id='upload_to_bigquery',
+        python_callable=upload_to_bigquery_ti,
+        op_kwargs={"client": bq_client,
+                   "dataset_name": dataset_name_t3,
+                   "table_name": table_name_t3,
+                   "job_config": job_config,}
+    )
+    
+    task1 >> task2 >> task3
