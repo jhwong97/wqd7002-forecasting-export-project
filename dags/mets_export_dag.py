@@ -67,7 +67,19 @@ blob_name_t1 = ["my_export_request.html"]
 file_format_t1 = "html"
 
 # Task2
+def mets_preprocess_ti(ti, client, bucket_name, blob_name, file_format):
+    gcs_uri_list_html = ti.xcom_pull(task_ids = "raw_html_extract")
+    gcs_uri_list = mets_preprocess(gcs_uri_list=gcs_uri_list_html,
+                                   client=client,
+                                   bucket_name=bucket_name,
+                                   blob_name=blob_name,
+                                   file_format=file_format
+                                   )
+    return gcs_uri_list
 
+blob_name_t2 = ["my_export_raw_data.csv"]
+file_format_t2 = "csv"
+    
 default_args = {
     'owner': 'albert',
     'email': ['albertwong345@gmail.com'],
@@ -111,4 +123,13 @@ with DAG(
                    "headers": headers}
     )
     
-    task1
+    task2 = PythonOperator(
+        task_id='preprocess_html_data',
+        python_callable=mets_preprocess_ti,
+        op_kwargs={"client": storage_client,
+                   "bucket_name": bucket_name_t1,
+                   "blob_name": blob_name_t2,
+                   "file_format": file_format_t2,}
+    )
+
+    task1 >> task2
