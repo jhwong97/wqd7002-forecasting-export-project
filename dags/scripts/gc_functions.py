@@ -90,4 +90,21 @@ def upload_to_bigquery(client, dataset_name, table_name, job_config, gcs_uri_lis
         
     except Exception as e:
         logging.error(f"Error: {e}")
-        raise AirflowFailException('Failure of the task due to encountered error.')        
+        raise AirflowFailException('Failure of the task due to encountered error.')
+
+def read_file_from_gcs(gcs_uri_list, client):
+    data_list = []
+    try:
+        for gcs_uri in gcs_uri_list:
+            bucket_name, blob_name = gcs_uri.split("//")[1].split("/",1)
+            bucket = client.get_bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+            logging.info(f"Reading file - {gcs_uri} from GCS in progress ...")
+            result = blob.download_as_string()
+            logging.info(f"SUCCESS: The file from {gcs_uri} has been successfully read.")
+            data_list.append(result)
+        return data_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
