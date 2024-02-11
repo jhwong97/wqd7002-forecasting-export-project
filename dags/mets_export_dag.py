@@ -4,7 +4,9 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from scripts.mets_functions import mets_extract, mets_transformation
+from google.cloud import storage
+from google.cloud import bigquery
+from scripts.mets_functions import mets_extract_html, mets_preprocess, mets_transformation
 from scripts.gc_functions import upload_to_bigquery, upload_to_bucket
 
 # Task1
@@ -18,7 +20,7 @@ with open('credentials.json', 'w') as cred_file:
         
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
 
-# Task 1 and Task 2
+# Task 1
 # Retrieve the csrf_token and Cookie values
 csrf_token = os.getenv("csrf_token")
 Cookie = os.getenv("cookie")
@@ -58,7 +60,10 @@ payload_export = {
     "Tradev2[codeshowby]": "code",
 }
 
-dataframe_name = "raw_malaysia_export"
+storage_client = storage.Client()
+bq_client = bigquery.Client()
+
+# Task2
 
 default_args = {
     'owner': 'albert',
@@ -92,10 +97,11 @@ with DAG(
 ) as dag:
     
     task1 = PythonOperator(
-        task_id='export_raw_extract',
-        python_callable=mets_extract,
+        task_id='raw_html_extract',
+        python_callable=mets_extract_html,
         op_kwargs={"url": url,
-                   "dataframe_name": dataframe_name,
                    "payload": payload_export,
                    "headers": headers}
     )
+    
+    task1
