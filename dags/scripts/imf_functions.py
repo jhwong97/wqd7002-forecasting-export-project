@@ -1,7 +1,8 @@
 import logging
 import io
 import pandas as pd
-from gc_functions import read_file_from_gcs
+from gc_functions import upload_to_bucket, read_file_from_gcs
+from airflow.exceptions import AirflowFailException
 
 
 def dots(country, counterparts, start, end, freq='A', form="wide"):
@@ -186,7 +187,11 @@ def imf_extract_data(countries,
                      counterparts, 
                      start_year, 
                      end_year, 
-                     frequency,):
+                     frequency,
+                     client,
+                     bucket_name,
+                     blob_name,
+                     file_format):
     
     df_list = []
     try:
@@ -197,14 +202,29 @@ def imf_extract_data(countries,
             df = dots(country, counterpart, start_year, end_year, frequency)
             logging.info(f"SUCCESS: {country}-{counterpart} data has been extracted.")
             df_list.append(df)
-        return df_list
     
     except Exception as e:
         logging.error(f"Error: {e}")
-        return None
+        raise AirflowFailException('Failure of the task due to encountered error.')
+
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
 
 def imf_transformation(gcs_uri_list,
-                       client,):
+                       client,
+                       bucket_name,
+                       blob_name,
+                       file_format):
     
     data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
     transformed_df_list = []
@@ -219,8 +239,19 @@ def imf_transformation(gcs_uri_list,
             df = df.drop_duplicates(subset='date')
             logging.info(f"SUCCESS: The dataset has been transformed.")
             transformed_df_list.append(df)
-            return transformed_df_list
         
         except Exception as e:
             logging.error(f"Error: {e}")
-            return None
+        raise AirflowFailException('Failure of the task due to encountered error.')
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=transformed_df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
