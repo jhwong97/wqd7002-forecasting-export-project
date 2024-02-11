@@ -3,7 +3,7 @@ import io
 import pandas as pd
 from airflow.exceptions import AirflowFailException
 from fredapi import Fred
-from scripts.gc_functions import upload_to_bucket, upload_to_bigquery, read_file_from_gcs
+from scripts.gc_functions import upload_to_bucket, read_file_from_gcs
 
 # Function to extract data from fred using API request
 def fred_data_extraction(FRED_API, selected_data, client, bucket_name, blob_name, file_format):
@@ -35,7 +35,7 @@ def fred_data_extraction(FRED_API, selected_data, client, bucket_name, blob_name
         raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Function to perform data transformation such as changing the data type and renaming column name
-def fred_transformation(df_list, selected_data, client, bucket_name, blob_name, file_format):
+def fred_transformation(selected_data, client, bucket_name, blob_name, file_format):
 
     data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
 
@@ -60,30 +60,4 @@ def fred_transformation(df_list, selected_data, client, bucket_name, blob_name, 
     
     except Exception as e:
         logging.error(f"Error: {e}")
-        raise AirflowFailException('Failure of the task due to encountered error.')
-
-# Define a function to execute the full ETL process for Fred data
-def fred_etl(FRED_API,
-             selected_data,
-             storage_client,
-             bucket_name,
-             bq_client,
-             dataset_name,
-             table_name,
-             job_config
-             ):
-    try:
-        df_list = fred_data_extraction(FRED_API=FRED_API, selected_data=selected_data)
-        transformed_df_list = fred_transformation(df_list=df_list, selected_data=selected_data)
-        gsutil_uri_list = upload_to_bucket(storage_client=storage_client,
-                                        bucket_name=bucket_name,
-                                        df_list=transformed_df_list)
-        upload_to_bigquery(client=bq_client,
-                        dataset_name=dataset_name,
-                        table_name=table_name,
-                        job_config=job_config,
-                        gsutil_uri=gsutil_uri_list)
-        return None
-    
-    except:
         raise AirflowFailException('Failure of the task due to encountered error.')
