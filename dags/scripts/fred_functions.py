@@ -1,11 +1,12 @@
 import logging
+import io
 import pandas as pd
 from airflow.exceptions import AirflowFailException
 from fredapi import Fred
-from scripts.gc_functions import upload_to_bucket, upload_to_bigquery
+from scripts.gc_functions import upload_to_bucket, upload_to_bigquery, read_file_from_gcs
 
 # Function to extract data from fred using API request
-def fred_data_extraction(FRED_API, selected_data):
+def fred_data_extraction(FRED_API, selected_data, client, bucket_name, blob_name, file_format):
     df_list = []
     fred = Fred(api_key = FRED_API)
     try:
@@ -16,24 +17,50 @@ def fred_data_extraction(FRED_API, selected_data):
             logging.info(f"SUCCESS: {item} data has been extracted.")
             df.name = item
             df_list.append(df)
-        return df_list
+            
     except Exception as e:
         logging.error("Error: {e}")
         raise AirflowFailException('Failure of the task due to encountered error.')
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Function to perform data transformation such as changing the data type and renaming column name
-def fred_transformation(df_list, selected_data):
+def fred_transformation(df_list, selected_data, client, bucket_name, blob_name, file_format):
+
+    data_list = read_file_from_gcs(gcs_uri_list = gcs_uri_list, client=client)
+
     transformed_df_list = []
-    for i in range(len(df_list)):
-        df = df_list[i]
+    for i in range(len(data_list)):
+        df = pd.read_csv(io.BytesIO(data_list[i]))
+        logging.info(f"Transforming dataset for {selected_data[i]} in progress ...")
         df['realtime_start'] = pd.to_datetime(df['realtime_start'])
         df['date'] = pd.to_datetime(df['date'])
         df = df.rename(columns={'value': selected_data[i]})
         df = df.drop_duplicates(subset='date')
-        df.name = selected_data[i]
         logging.info(f"SUCCESS: {selected_data[i]} dataset has been transformed.")
         transformed_df_list.append(df)
-    return transformed_df_list
+    
+    try:
+        gcs_uri_list = upload_to_bucket(data_list=transformed_df_list,
+                                        client=client,
+                                        bucket_name=bucket_name,
+                                        blob_name=blob_name,
+                                        file_format=file_format)
+        return gcs_uri_list
+    
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise AirflowFailException('Failure of the task due to encountered error.')
 
 # Define a function to execute the full ETL process for Fred data
 def fred_etl(FRED_API,
