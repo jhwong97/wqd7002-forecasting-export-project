@@ -28,6 +28,19 @@ bucket_name_t1 = "wqd7002_project"
 blob_name_t1 = ["my_er_raw_data.csv", "my_rbeer_raw_data.csv"]
 file_format_t1 = "csv"
 
+# Task 2
+def fred_transformation_ti(ti, selected_data, client, bucket_name, blob_name, file_format):
+    gcs_uri_list_raw = ti.xcom_pull(task_ids = "raw_data_extract")
+    gcs_uri_list = fred_transformation(gcs_uri_list=gcs_uri_list_raw,
+                                       selected_data=selected_data,
+                                       client=client,
+                                       bucket_name=bucket_name,
+                                       blob_name=blob_name,
+                                       file_format=file_format)
+    return gcs_uri_list
+blob_name_t2 = ["my_er_transformed_data.csv", "my_rbeer_transformed_data.csv"]
+file_format_t2 = "csv"
+
 # Dag configurations part
 default_args = {
     'owner': 'albert',
@@ -71,4 +84,14 @@ with DAG(
                    "file_format": file_format_t1,}
     )
     
-    task1
+    task2 = PythonOperator(
+        task_id='data_transformation',
+        python_callable=fred_transformation_ti,
+        op_kwargs={"client": storage_client,
+                   "selected_data": selected_data,
+                   "bucket_name": bucket_name_t1,
+                   "blob_name": blob_name_t2,
+                   "file_format": file_format_t2,}
+    )
+    
+    task1 >> task2
