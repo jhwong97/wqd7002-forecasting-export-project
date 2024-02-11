@@ -1,7 +1,7 @@
 import logging
 import io
 import pandas as pd
-from gc_functions import upload_to_bucket, read_file_from_gcs
+from scripts.gc_functions import upload_to_bucket, read_file_from_gcs
 from airflow.exceptions import AirflowFailException
 
 
