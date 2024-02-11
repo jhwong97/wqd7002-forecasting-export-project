@@ -79,6 +79,21 @@ def mets_preprocess_ti(ti, client, bucket_name, blob_name, file_format):
 
 blob_name_t2 = ["my_export_raw_data.csv"]
 file_format_t2 = "csv"
+
+# Task3
+def mets_transformation_ti(ti, client, new_column_name, bucket_name, blob_name, file_format):
+    gcs_uri_list_raw = ti.xcom_pull(task_ids = "preprocess_html_data")
+    gcs_uri_list = mets_transformation(gcs_uri_list=gcs_uri_list_raw,
+                                       client=client,
+                                       new_column_name=new_column_name,
+                                       bucket_name=bucket_name,
+                                       blob_name=blob_name,
+                                       file_format=file_format)
+    return gcs_uri_list
+
+new_column_name_t3 = "my_total_export"
+blob_name_t3 = ["my_export_transformed_data.csv"]
+file_format_t3 = "csv"
     
 default_args = {
     'owner': 'albert',
@@ -132,4 +147,14 @@ with DAG(
                    "file_format": file_format_t2,}
     )
 
-    task1 >> task2
+    task3 = PythonOperator(
+        task_id='raw_data_transformation',
+        python_callable=mets_transformation_ti,
+        op_kwargs={"client": storage_client,
+                   "new_column_name": new_column_name_t3,
+                   "bucket_name": bucket_name_t1,
+                   "blob_name": blob_name_t3,
+                   "file_format": file_format_t3,}
+    )
+    
+    task1 >> task2 >> task3
