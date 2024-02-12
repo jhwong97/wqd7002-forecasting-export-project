@@ -67,7 +67,7 @@ The procedures for setting up the airflow using Docker are as below:-
     **Notes*: The WSL2 should be installed in your window systems to run the Docker Desktop.*
 
 ### Configuring the Airflow DAGs for ETL Workflow
-All the DAGs used in this project are listed in the [dags](/dags/) folder, where the subfolder - [scrips](dags/scripts/) is used to store the utilities functions.
+All the DAGs used in this project are listed in the [dags](/dags/) folder, where the subfolder - [scripts](dags/scripts/) is used to store the utilities functions.
 
 The following tasks are covered by the DAGs:
 - Extracting raw data from defined data sources.
