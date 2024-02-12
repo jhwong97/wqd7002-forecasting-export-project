@@ -56,6 +56,23 @@ The procedures for setting up the airflow using Docker are as below:-
     `AIRFLOW_UID=50000`
 4. Execute the below command to initiate the airflow.
     `docker compose up airflow-init`
-5. Run `docker compose up -d` to start the docker images in the background.
+5. Install the necessary packages into the airflow images by following this few steps:
+    - Create a **Dockerfile** and include the lines as shown [here](/Dockerfile). You can update the base apache airflow image with your own version.
+    - Run `docker build --tag name:tag .` , where **name** is the image name given to the newly build image and **tag** is the version.
+    
+        **Note*: Make sure the requirements.txt is available in the same directory.*
+    
+6. Run `docker compose up -d` to start the docker images in the background.
 
-***Notes**: The WSL2 should be installed in your window systems to run the Docker Desktop.*
+    **Notes*: The WSL2 should be installed in your window systems to run the Docker Desktop.*
+
+### Configuring the Airflow DAGs for ETL Workflow
+All the DAGs used in this project are listed in the [dags](/dags/) folder, where the subfolder - [scrips](dags/scripts/) is used to store the utilities functions.
+
+The following tasks are covered by the DAGs:
+- Extracting raw data from defined data sources.
+- Transforming raw data to satisfy the project needs.
+- Uploading a copy of the raw data and trasformed data to gcs.
+- Loading the transformed data to big query.
+
+For more information on airflow DAGs, refer [here](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html).
