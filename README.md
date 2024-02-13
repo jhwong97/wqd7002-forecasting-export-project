@@ -74,5 +74,6 @@ The following tasks are covered by the DAGs:
 - Transforming raw data to satisfy the project needs.
 - Uploading a copy of the raw data and trasformed data to gcs.
 - Loading the transformed data to big query.
+- Triggering multiple dags concurrently.
 
 For more information on airflow DAGs, refer [here](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html).
