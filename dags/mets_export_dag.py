@@ -20,7 +20,6 @@ with open('credentials.json', 'w') as cred_file:
         
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
 
-# Task 1
 # Retrieve the csrf_token and Cookie values
 csrf_token = os.getenv("csrf_token")
 Cookie = os.getenv("cookie")
@@ -61,11 +60,13 @@ payload_export = {
 }
 
 storage_client = storage.Client()
-bucket_name_t1 = "wqd7002_project"
-blob_name_t1 = ["my_export_request.html"]
-file_format_t1 = "html"
+bucket_name = "wqd7002_project"
+bq_client = bigquery.Client()
+job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
+                                    write_disposition='WRITE_TRUNCATE',
+                                    skip_leading_rows=1,
+                                    autodetect=True,)
 
-# Task2
 def mets_preprocess_ti(ti, client, bucket_name, blob_name, file_format):
     gcs_uri_list_html = ti.xcom_pull(task_ids = "raw_html_extract")
     gcs_uri_list = mets_preprocess(gcs_uri_list=gcs_uri_list_html,
@@ -76,10 +77,6 @@ def mets_preprocess_ti(ti, client, bucket_name, blob_name, file_format):
                                    )
     return gcs_uri_list
 
-blob_name_t2 = ["my_export_raw_data.csv"]
-file_format_t2 = "csv"
-
-# Task3
 def mets_transformation_ti(ti, client, new_column_name, bucket_name, blob_name, file_format):
     gcs_uri_list_raw = ti.xcom_pull(task_ids = "preprocess_html_data")
     gcs_uri_list = mets_transformation(gcs_uri_list=gcs_uri_list_raw,
@@ -90,11 +87,6 @@ def mets_transformation_ti(ti, client, new_column_name, bucket_name, blob_name, 
                                        file_format=file_format)
     return gcs_uri_list
 
-new_column_name_t3 = "my_total_export"
-blob_name_t3 = ["my_export_transformed_data.csv"]
-file_format_t3 = "csv"
-
-# Task4
 def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
     gcs_uri_list_transformed = ti.xcom_pull(task_ids = "raw_data_transformation")
     upload_to_bigquery(client=client,
@@ -104,13 +96,6 @@ def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
                        gcs_uri_list=gcs_uri_list_transformed)
     return
 
-bq_client = bigquery.Client()
-dataset_name_t4 = "wqd7002_project"
-table_name_t4 = ["malaysia_export"]
-job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
-                                    write_disposition='WRITE_TRUNCATE',
-                                    skip_leading_rows=1,
-                                    autodetect=True,)
 
 # Dag configurations part
 default_args = {
@@ -149,9 +134,9 @@ with DAG(
         python_callable=mets_extract_html,
         op_kwargs={"url": url,
                    "client": storage_client,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t1,
-                   "file_format": file_format_t1,
+                   "bucket_name": bucket_name,
+                   "blob_name": ["my_export_request.html"],
+                   "file_format": "html",
                    "payload": payload_export,
                    "headers": headers}
     )
@@ -160,27 +145,27 @@ with DAG(
         task_id='preprocess_html_data',
         python_callable=mets_preprocess_ti,
         op_kwargs={"client": storage_client,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t2,
-                   "file_format": file_format_t2,}
+                   "bucket_name": bucket_name,
+                   "blob_name": ["my_export_raw_data.csv"],
+                   "file_format": "csv",}
     )
 
     task3 = PythonOperator(
         task_id='raw_data_transformation',
         python_callable=mets_transformation_ti,
         op_kwargs={"client": storage_client,
-                   "new_column_name": new_column_name_t3,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t3,
-                   "file_format": file_format_t3,}
+                   "new_column_name": "my_total_export",
+                   "bucket_name": bucket_name,
+                   "blob_name": ["my_export_transformed_data.csv"],
+                   "file_format": "csv",}
     )
     
     task4 = PythonOperator(
         task_id='upload_to_bigquery',
         python_callable=upload_to_bigquery_ti,
         op_kwargs={"client": bq_client,
-                   "dataset_name": dataset_name_t4,
-                   "table_name": table_name_t4,
+                   "dataset_name": "wqd7002_project",
+                   "table_name": ["malaysia_export"],
                    "job_config": job_config,}
     )
     

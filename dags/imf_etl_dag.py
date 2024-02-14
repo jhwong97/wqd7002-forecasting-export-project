@@ -10,7 +10,7 @@ from scripts.imf_functions import imf_extract_data, imf_transformation
 from scripts.gc_functions import upload_to_bigquery
 
 load_dotenv()
-# Task 1
+
 # Convert the credentials to .json file for the usage of GOOGLE_APPLICATION_CREDENTIALS
 CREDENTIALS = json.loads(os.getenv('CREDENTIALS'))
 
@@ -20,17 +20,14 @@ with open('credentials.json', 'w') as cred_file:
            
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
 
-countries = ["W00"]
-counterparts = ["W00"]
-start_year = 2000
-end_year = 2023
-frequency = "M"
 storage_client = storage.Client()
-bucket_name_t1 = "wqd7002_project"
-blob_name_t1 = ["world_export_raw_data.csv"]
-file_format_t1 = "csv"
+bucket_name = "wqd7002_project"
+bq_client = bigquery.Client()
+job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
+                                    write_disposition='WRITE_TRUNCATE',
+                                    skip_leading_rows=1,
+                                    autodetect=True,)
 
-# Task 2
 def imf_transformation_ti(ti, client, bucket_name, blob_name, file_format):
     gcs_uri_list_raw = ti.xcom_pull(task_ids = "raw_data_extract")
     gcs_uri_list = imf_transformation(gcs_uri_list=gcs_uri_list_raw,
@@ -40,10 +37,6 @@ def imf_transformation_ti(ti, client, bucket_name, blob_name, file_format):
                                       file_format=file_format)
     return gcs_uri_list
 
-blob_name_t2 = ["world_export_transformed_data.csv"]
-file_format_t2 = "csv"
-
-# Task 3
 def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
     gcs_uri_list_transformed = ti.xcom_pull(task_ids = "data_transformation")
     upload_to_bigquery(client=client,
@@ -53,13 +46,6 @@ def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
                        gcs_uri_list=gcs_uri_list_transformed)
     return
 
-bq_client = bigquery.Client()
-dataset_name_t3 = "wqd7002_project"
-table_name_t3 = ["world_export"]
-job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
-                                    write_disposition='WRITE_TRUNCATE',
-                                    skip_leading_rows=1,
-                                    autodetect=True,)
 
 # Dag configurations part
 default_args = {
@@ -96,32 +82,32 @@ with DAG(
     task1 = PythonOperator(
         task_id='raw_data_extract',
         python_callable=imf_extract_data,
-        op_kwargs={"countries": countries,
-                   "counterparts": counterparts,
-                   "start_year": start_year,
-                   "end_year": end_year,
-                   "frequency": frequency,
+        op_kwargs={"countries": ["W00"],
+                   "counterparts": ["W00"],
+                   "start_year": 2000,
+                   "end_year": 2023,
+                   "frequency": "M",
                    "client": storage_client,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t1,
-                   "file_format": file_format_t1,}
+                   "bucket_name": bucket_name,
+                   "blob_name": ["world_export_raw_data.csv"],
+                   "file_format": "csv",}
     )
     
     task2 = PythonOperator(
         task_id='data_transformation',
         python_callable=imf_transformation_ti,
         op_kwargs={"client": storage_client,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t2,
-                   "file_format": file_format_t2,}
+                   "bucket_name": bucket_name,
+                   "blob_name": ["world_export_transformed_data.csv"],
+                   "file_format": "csv",}
     )
     
     task3 = PythonOperator(
         task_id='upload_to_bigquery',
         python_callable=upload_to_bigquery_ti,
         op_kwargs={"client": bq_client,
-                   "dataset_name": dataset_name_t3,
-                   "table_name": table_name_t3,
+                   "dataset_name": "wqd7002_project",
+                   "table_name": ["world_export"],
                    "job_config": job_config,}
     )
     
