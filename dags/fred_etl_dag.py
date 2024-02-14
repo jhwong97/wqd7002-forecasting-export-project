@@ -11,7 +11,6 @@ from scripts.gc_functions import upload_to_bigquery
 
 load_dotenv()
 
-# Task 1
 # Convert the credentials to .json file for the usage of GOOGLE_APPLICATION_CREDENTIALS
 CREDENTIALS = json.loads(os.getenv('CREDENTIALS'))
 
@@ -24,11 +23,8 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
 fred_api = os.getenv("fred_api")
 selected_data = ['EXMAUS', 'RBMYBIS']
 storage_client = storage.Client()
-bucket_name_t1 = "wqd7002_project"
-blob_name_t1 = ["my_er_raw_data.csv", "my_rbeer_raw_data.csv"]
-file_format_t1 = "csv"
+bucket_name = "wqd7002_project"
 
-# Task 2
 def fred_transformation_ti(ti, selected_data, client, bucket_name, blob_name, file_format):
     gcs_uri_list_raw = ti.xcom_pull(task_ids = "raw_data_extract")
     gcs_uri_list = fred_transformation(gcs_uri_list=gcs_uri_list_raw,
@@ -41,7 +37,6 @@ def fred_transformation_ti(ti, selected_data, client, bucket_name, blob_name, fi
 blob_name_t2 = ["my_er_transformed_data.csv", "my_rbeer_transformed_data.csv"]
 file_format_t2 = "csv"
 
-# Task 3
 def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
     gcs_uri_list_transformed = ti.xcom_pull(task_ids = "data_transformation")
     upload_to_bigquery(client=client,
@@ -51,8 +46,6 @@ def upload_to_bigquery_ti(ti, client, dataset_name, table_name, job_config):
                        gcs_uri_list=gcs_uri_list_transformed)
     return
 bq_client = bigquery.Client()
-dataset_name_t3 = "wqd7002_project"
-table_name_t3 = ["USDMYR", "RBEER"]
 job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.CSV,
                                     write_disposition='WRITE_TRUNCATE',
                                     skip_leading_rows=1,
@@ -64,7 +57,7 @@ default_args = {
     'email': ['albertwong345@gmail.com'],
     # 'email_on_failure': False,
     # 'email_on_retry': False,
-    'retries': 1,
+    'retries': 3,
     'retry_delay': timedelta(minutes=1),
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',
@@ -96,9 +89,9 @@ with DAG(
         op_kwargs={"FRED_API": fred_api,
                    "selected_data": selected_data,
                    "client": storage_client,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t1,
-                   "file_format": file_format_t1,}
+                   "bucket_name": bucket_name,
+                   "blob_name": ["my_er_raw_data.csv", "my_rbeer_raw_data.csv"],
+                   "file_format": "csv",}
     )
     
     task2 = PythonOperator(
@@ -106,17 +99,17 @@ with DAG(
         python_callable=fred_transformation_ti,
         op_kwargs={"client": storage_client,
                    "selected_data": selected_data,
-                   "bucket_name": bucket_name_t1,
-                   "blob_name": blob_name_t2,
-                   "file_format": file_format_t2,}
+                   "bucket_name": bucket_name,
+                   "blob_name": ["my_er_transformed_data.csv", "my_rbeer_transformed_data.csv"],
+                   "file_format": "csv",}
     )
     
     task3 = PythonOperator(
         task_id='upload_to_bigquery',
         python_callable=upload_to_bigquery_ti,
         op_kwargs={"client": bq_client,
-                   "dataset_name": dataset_name_t3,
-                   "table_name": table_name_t3,
+                   "dataset_name": "wqd7002_project",
+                   "table_name": ["USDMYR", "RBEER"],
                    "job_config": job_config,}
     )
     
