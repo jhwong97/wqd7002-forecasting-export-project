@@ -9,18 +9,8 @@ from google.cloud import bigquery
 from scripts.mets_functions import mets_extract_html, mets_preprocess, mets_transformation
 from scripts.gc_functions import upload_to_bigquery
 
-# Task1
 load_dotenv()
-# Convert the credentials to .json file for the usage of GOOGLE_APPLICATION_CREDENTIALS
-CREDENTIALS = json.loads(os.getenv('CREDENTIALS'))
 
-# Check if there's an existing credentials file
-with open('credentials.json', 'w') as cred_file:
-    json.dump(CREDENTIALS, cred_file)
-        
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
-
-# Task 1
 # Retrieve the csrf_token and Cookie values
 csrf_token = os.getenv("csrf_token")
 Cookie = os.getenv("cookie")
@@ -104,7 +94,7 @@ default_args = {
     'email': ['albertwong345@gmail.com'],
     # 'email_on_failure': False,
     # 'email_on_retry': False,
-    'retries': 1,
+    'retries': 3,
     'retry_delay': timedelta(minutes=1),
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',

@@ -11,15 +11,6 @@ from scripts.gc_functions import upload_to_bigquery
 
 load_dotenv()
 
-# Convert the credentials to .json file for the usage of GOOGLE_APPLICATION_CREDENTIALS
-CREDENTIALS = json.loads(os.getenv('CREDENTIALS'))
-
-# Check if there's an existing credentials file
-with open('credentials.json', 'w') as cred_file:
-    json.dump(CREDENTIALS, cred_file)
-           
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ='credentials.json'
-
 fred_api = os.getenv("fred_api")
 selected_data = ['EXMAUS', 'RBMYBIS']
 storage_client = storage.Client()
